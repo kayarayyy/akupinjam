@@ -3,9 +3,9 @@ package com.example.akupinjam.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.example.akupinjam.models.User;
+import com.example.akupinjam.models.RoleToFeature;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Integer> {
+public interface RoleToFeatureRepository extends JpaRepository<RoleToFeature, Integer>{
 
 }

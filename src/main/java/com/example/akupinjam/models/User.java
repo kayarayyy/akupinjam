@@ -10,7 +10,7 @@ import lombok.*;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -24,8 +24,9 @@ public class User {
     @Column(nullable = false, unique = true)
     private int nip;
 
-    @Column(nullable = false)
-    private int role;
+    @ManyToOne
+    @JoinColumn(name = "role_id", referencedColumnName = "id")
+    private Role role;
     
     @Column()
     private String alamat;

@@ -2,10 +2,13 @@ package com.example.akupinjam.controller;
 
 import com.example.akupinjam.models.User;
 import com.example.akupinjam.repository.UserRepository;
+import com.example.akupinjam.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -14,41 +17,68 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    // GET: Mendapatkan semua user
+    @Autowired
+    private RoleRepository roleRepository;
+
+    // Get all users
     @GetMapping
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    // POST: Menambahkan user baru
-    @PostMapping
-    public User addUser(@RequestBody User user) {
-        return userRepository.save(user);
-    }
-
-    // GET: Mendapatkan user berdasarkan ID
+    // Get user by ID
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id) {
-        return userRepository.findById(id).orElse(null);
+    public ResponseEntity<User> getUserById(@PathVariable int id) {
+        Optional<User> user = userRepository.findById(id);
+        return user.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // PUT: Mengupdate data user
+    // Create a new user
+    @PostMapping
+    public ResponseEntity<User> createUser(@RequestBody User user) {
+        if (roleRepository.existsById(user.getRole().getId())) {
+            User savedUser = userRepository.save(user);
+            return ResponseEntity.ok(savedUser);
+        }
+        return ResponseEntity.badRequest().build();
+    }
+
+    // Update user
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
-        return userRepository.findById(id).map(user -> {
-            user.setName(updatedUser.getName());
-            user.setEmail(updatedUser.getEmail());
-            user.setPassword(updatedUser.getPassword());
-            user.setNip(updatedUser.getNip());
-            user.setRole(updatedUser.getRole());
-            user.setAlamat(updatedUser.getAlamat());
-            return userRepository.save(user);
-        }).orElse(null);
+    public ResponseEntity<User> updateUser(@PathVariable int id, @RequestBody User userDetails) {
+        Optional<User> optionalUser = userRepository.findById(id);
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            user.setName(userDetails.getName());
+            user.setEmail(userDetails.getEmail());
+            user.setPassword(userDetails.getPassword());
+            user.setNip(userDetails.getNip());
+            user.setAlamat(userDetails.getAlamat());
+
+            if (roleRepository.existsById(userDetails.getRole().getId())) {
+                user.setRole(userDetails.getRole());
+                userRepository.save(user);
+                return ResponseEntity.ok(user);
+            } else {
+                return ResponseEntity.badRequest().build();
+            }
+        }
+
+        return ResponseEntity.notFound().build();
     }
 
-    // DELETE: Menghapus user
+    // Delete user
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
-        userRepository.deleteById(id);
+    public ResponseEntity<Void> deleteUser(@PathVariable int id) {
+        Optional<User> user = userRepository.findById(id);
+
+        if (user.isPresent()) {
+            userRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.notFound().build();
     }
 }
