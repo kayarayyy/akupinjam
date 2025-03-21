@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication
 @ComponentScan(basePackages = "com.example.akupinjam")
 @EntityScan(basePackages = "com.example.akupinjam.models")
-@EnableJpaRepositories(basePackages = "com.example.akupinjam.repository")
+@EnableJpaRepositories(basePackages = "com.example.akupinjam.repositories")
 public class AkupinjamApplication {
 
 	public static void main(String[] args) {

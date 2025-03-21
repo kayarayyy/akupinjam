@@ -1,4 +1,4 @@
-package com.example.akupinjam.controller;
+package com.example.akupinjam.controllers;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,11 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.akupinjam.models.Feature;
-import com.example.akupinjam.models.Feature;
-import com.example.akupinjam.repository.FeatureRepository;
+import com.example.akupinjam.repositories.FeatureRepository;
 
 @RestController
-@RequestMapping("/api/features")
+@RequestMapping("/api/v1/features")
 public class FeatureController {
     @Autowired
     private FeatureRepository featureRepository;

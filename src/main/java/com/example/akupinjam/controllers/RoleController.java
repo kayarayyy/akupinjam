@@ -1,4 +1,4 @@
-package com.example.akupinjam.controller;
+package com.example.akupinjam.controllers;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.akupinjam.models.Role;
-import com.example.akupinjam.repository.RoleRepository;
+import com.example.akupinjam.repositories.RoleRepository;
 
 @RestController
-@RequestMapping("api/roles")
+@RequestMapping("api/v1/roles")
 public class RoleController {
     @Autowired
     private RoleRepository roleRepository;

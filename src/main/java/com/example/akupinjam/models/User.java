@@ -12,7 +12,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
     
     @Column(nullable = false, unique = true)
@@ -21,8 +21,8 @@ public class User {
     @Column(nullable = false)
     private String password;
     
-    @Column(nullable = false, unique = true)
-    private int nip;
+    @Column(unique = true)
+    private Integer nip;
 
     @ManyToOne
     @JoinColumn(name = "role_id", referencedColumnName = "id")

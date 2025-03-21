@@ -1,8 +1,9 @@
-package com.example.akupinjam.controller;
+package com.example.akupinjam.controllers;
 
 import com.example.akupinjam.models.User;
-import com.example.akupinjam.repository.UserRepository;
-import com.example.akupinjam.repository.RoleRepository;
+import com.example.akupinjam.repositories.RoleRepository;
+import com.example.akupinjam.repositories.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
     @Autowired
