@@ -9,23 +9,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.akupinjam.dto.AuthResponseDto;
 import com.example.akupinjam.dto.ResponseDto;
-import com.example.akupinjam.services.AuthServices;
+import com.example.akupinjam.services.AuthService;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
     @Autowired
-    private AuthServices authServices;
+    private AuthService authServices;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, Object> payload) {
         try {
-            ResponseDto response = authServices.login(payload);
+            ResponseDto responseDto = authServices.login(payload);
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(responseDto.getStatusCode()).body(responseDto);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -35,9 +34,9 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, Object> payload) {
         try {
-            ResponseDto response = authServices.register(payload);
+            ResponseDto responseDto = authServices.register(payload);
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(responseDto.getStatusCode()).body(responseDto);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

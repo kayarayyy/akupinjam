@@ -1,4 +1,6 @@
 package com.example.akupinjam.models;
+
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,14 +22,12 @@ public class User {
     
     @Column(nullable = false)
     private String password;
-    
-    @Column(unique = true)
-    private Integer nip;
 
     @ManyToOne
     @JoinColumn(name = "role_id", referencedColumnName = "id")
     private Role role;
-    
-    @Column()
-    private String alamat;
+
+    @Column(nullable = false)
+    private boolean isActive;
 }
+

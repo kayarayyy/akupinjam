@@ -1,6 +1,8 @@
 package com.example.akupinjam.dto;
 
+
 import com.example.akupinjam.models.Role;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.*;
 
@@ -10,8 +12,9 @@ import lombok.*;
 public class AuthResponseDto {
 
     private String email;
-    private String nama;
+    private String name;
     private Role role;
-    private String alamat;
-    private Integer nip;
+    @JsonProperty("is_active")
+    private boolean isActive;
+    private String token;
 }

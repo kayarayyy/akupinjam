@@ -46,29 +46,29 @@ public class UserController {
     }
 
     // Update user
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable int id, @RequestBody User userDetails) {
-        Optional<User> optionalUser = userRepository.findById(id);
+    // @PutMapping("/{id}")
+    // public ResponseEntity<User> updateUser(@PathVariable int id, @RequestBody User userDetails) {
+    //     Optional<User> optionalUser = userRepository.findById(id);
 
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            user.setName(userDetails.getName());
-            user.setEmail(userDetails.getEmail());
-            user.setPassword(userDetails.getPassword());
-            user.setNip(userDetails.getNip());
-            user.setAlamat(userDetails.getAlamat());
+    //     if (optionalUser.isPresent()) {
+    //         User user = optionalUser.get();
+    //         user.setName(userDetails.getName());
+    //         user.setEmail(userDetails.getEmail());
+    //         user.setPassword(userDetails.getPassword());
+    //         user.setNip(userDetails.getNip());
+    //         user.setAlamat(userDetails.getAlamat());
 
-            if (roleRepository.existsById(userDetails.getRole().getId())) {
-                user.setRole(userDetails.getRole());
-                userRepository.save(user);
-                return ResponseEntity.ok(user);
-            } else {
-                return ResponseEntity.badRequest().build();
-            }
-        }
+    //         if (roleRepository.existsById(userDetails.getRole().getId())) {
+    //             user.setRole(userDetails.getRole());
+    //             userRepository.save(user);
+    //             return ResponseEntity.ok(user);
+    //         } else {
+    //             return ResponseEntity.badRequest().build();
+    //         }
+    //     }
 
-        return ResponseEntity.notFound().build();
-    }
+    //     return ResponseEntity.notFound().build();
+    // }
 
     // Delete user
     @DeleteMapping("/{id}")

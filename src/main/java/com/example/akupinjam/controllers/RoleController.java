@@ -1,6 +1,7 @@
 package com.example.akupinjam.controllers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,47 +14,59 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.akupinjam.models.Role;
-import com.example.akupinjam.repositories.RoleRepository;
+import com.example.akupinjam.dto.ResponseDto;
+import com.example.akupinjam.services.RoleService;
 
 @RestController
 @RequestMapping("api/v1/roles")
 public class RoleController {
+
+
     @Autowired
-    private RoleRepository roleRepository;
+    private RoleService roleService;
 
     @GetMapping
-    public List<Role> getAllRoles() {
-        return roleRepository.findAll();
+    public ResponseEntity<?> getAllRoles() {
+        
+        try {
+            ResponseDto responseDto = roleService.getAllRoles();
+
+            return ResponseEntity.status(responseDto.getStatusCode()).body(responseDto);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Role> getRoleById(@PathVariable int id) {
-        Optional<Role> role = roleRepository.findById(id);
-        return role.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<?> getRoleById(@PathVariable int id) {
+        try {
+            ResponseDto responseDto = roleService.getRoleById(id);
+
+            return ResponseEntity.status(responseDto.getStatusCode()).body(responseDto);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PostMapping
-    public ResponseEntity<Role> createRole(@RequestBody Role role) {
-        if (roleRepository.count() == 0) {
-            Role savedRole = roleRepository.save(role);
-            return ResponseEntity.ok(savedRole);
-        } else if (!roleRepository.existsByName(role.getName())) {
-            Role savedRole = roleRepository.save(role);
-            return ResponseEntity.ok(savedRole);
+    public ResponseEntity<?> createRole(@RequestBody Map<String, Object> payload) {
+        try {
+            ResponseDto responseDto = roleService.createRole(payload);
+
+            return ResponseEntity.status(responseDto.getStatusCode()).body(responseDto);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return ResponseEntity.badRequest().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRole(@PathVariable int id){
-        Optional<Role> role = roleRepository.findById(id);
+    public ResponseEntity<?> deleteRole(@PathVariable int id){
+        try {
+            ResponseDto responseDto = roleService.deleteRole(id);
 
-        if (role.isPresent()){
-            roleRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.status(responseDto.getStatusCode()).body(responseDto);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        return ResponseEntity.notFound().build();
     }
 }
