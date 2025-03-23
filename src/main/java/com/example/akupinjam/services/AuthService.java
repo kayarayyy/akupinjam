@@ -1,19 +1,19 @@
 package com.example.akupinjam.services;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.akupinjam.dto.AuthResponseDto;
+import com.example.akupinjam.dto.AuthDto;
 import com.example.akupinjam.dto.ResponseDto;
 import com.example.akupinjam.models.Role;
 import com.example.akupinjam.models.User;
 import com.example.akupinjam.repositories.AuthRepository;
 import com.example.akupinjam.repositories.RoleRepository;
 import com.example.akupinjam.utils.JwtUtil;
+
 
 @Service
 public class AuthService {
@@ -36,11 +36,11 @@ public class AuthService {
             User user = authRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
             if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-                throw new RuntimeException("Wrong password!!");
+                return new ResponseDto(401, "failed", "Wrong password!", null);
             }
 
             String token = jwtUtil.generateToken(email, user.getRole().getId());
-            AuthResponseDto authResponseDto = new AuthResponseDto(
+            AuthDto authResponseDto = new AuthDto(
                     user.getEmail(),
                     user.getName(),
                     user.getRole(),
@@ -54,36 +54,56 @@ public class AuthService {
 
     public ResponseDto register(Map<String, Object> payload) {
         try {
-            User user = new User();
-
-            user.setEmail((String) payload.get("email"));
-            user.setName((String) payload.get("name"));
-            user.setActive((boolean) payload.get("is_active"));
-
+            String email = (String) payload.get("email");
+            String name = (String) payload.get("name");
+            boolean isActive = (boolean) payload.get("is_active");
             String rawPassword = (String) payload.get("password");
-            String hashPassword = passwordEncoder.encode(rawPassword);
-            user.setPassword(hashPassword);
-
             int roleId = (int) payload.get("role_id");
-            if (!roleRepository.existsById(roleId)) {
-                throw new RuntimeException("Role not found!!");
+            
+            
+            // Variabel untuk menyimpan role
+            Role role;
+            try {
+                Integer roleIdFromToken = jwtUtil.getRoleIdFromToken();
+
+                Role roleFromToken = roleRepository.findById(roleIdFromToken)
+                        .orElseThrow(() -> new RuntimeException("Role from token not found!"));
+
+                // Jika role dari token adalah Super Admin, pilih role sesuai input
+                if (roleFromToken.getName().equalsIgnoreCase("superadmin")) {
+                    role = roleRepository.findById(roleId)
+                            .orElseThrow(() -> new RuntimeException("Role not found!"));
+                } else {
+                    // Jika bukan Super Admin, tetapkan role sebagai Customer
+                    role = roleRepository.findByName("customer")
+                            .orElseThrow(() -> new RuntimeException("Customer role not found!"));
+                }
+            } catch (Exception e) {
+                // Jika tidak ada token atau token tidak valid, tetapkan sebagai Customer
+                role = roleRepository.findByName("customer")
+                        .orElseThrow(() -> new RuntimeException("Customer role not found!"));
             }
 
-            Role role = roleRepository.findById(roleId).orElseThrow(() -> new RuntimeException("Role not found!!"));
+            User user = new User();
+            user.setEmail(email);
+            user.setName(name);
+            user.setActive(isActive);
+            user.setPassword(passwordEncoder.encode(rawPassword));
             user.setRole(role);
 
             authRepository.save(user);
 
-            String token = jwtUtil.generateToken(user.getEmail(), user.getRole().getId());
-            AuthResponseDto authResponseDto = new AuthResponseDto(
+            AuthDto authResponseDto = new AuthDto(
                     user.getEmail(),
                     user.getName(),
                     user.getRole(),
                     user.isActive(),
-                    token);
+                    null);
+
             return new ResponseDto(200, "success", "Register success", authResponseDto);
+
         } catch (Exception e) {
-            return new ResponseDto(400, "error", e.getMessage(), null);
+            return new ResponseDto(400, "error", "Registration failed: " + e.getMessage(), null);
         }
     }
 }

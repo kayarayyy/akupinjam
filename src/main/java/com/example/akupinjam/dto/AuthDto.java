@@ -9,7 +9,7 @@ import lombok.*;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthResponseDto {
+public class AuthDto {
 
     private String email;
     private String name;

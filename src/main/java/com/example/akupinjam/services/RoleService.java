@@ -1,6 +1,5 @@
 package com.example.akupinjam.services;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,32 +10,23 @@ import org.springframework.stereotype.Service;
 import com.example.akupinjam.dto.ResponseDto;
 import com.example.akupinjam.models.Role;
 import com.example.akupinjam.repositories.RoleRepository;
-import com.example.akupinjam.utils.JwtUtil;
 
 @Service
 public class RoleService {
     @Autowired
     private RoleRepository roleRepository;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
     public ResponseDto getAllRoles() {
         try {
-            Integer role_id = jwtUtil.getRoleIdFromToken();
-
-            if (role_id != 1) {
-
-                return new ResponseDto(401, "failed", "Unauthorized request",
-                        null);
-            }
 
             List<Role> role = roleRepository.findAll();
 
             return new ResponseDto(200, "success", role.isEmpty() ? "Record not found" : role.size() + " records found",
                     role);
+        } catch (RuntimeException e) {
+            return new ResponseDto(501, "failed", e.getMessage(), null);
         } catch (Exception e) {
-            return new ResponseDto(400, "error", e.getMessage(), null);
+            return new ResponseDto(400, "failed", "Something wrong: " + e.getMessage(), null);
         }
     }
 
@@ -45,8 +35,10 @@ public class RoleService {
             Optional<Role> role = roleRepository.findById(id);
 
             return new ResponseDto(200, "success", role.isEmpty() ? "Record not found" : "Record found", role);
+        } catch (RuntimeException e) {
+            return new ResponseDto(501, "failed", e.getMessage(), null);
         } catch (Exception e) {
-            return new ResponseDto(400, "error", e.getMessage(), null);
+            return new ResponseDto(400, "failed", "Something wrong: " + e.getMessage(), null);
         }
     }
 
@@ -57,23 +49,42 @@ public class RoleService {
 
             role = roleRepository.save(role);
 
-            return new ResponseDto(200, "success", "Role saved", role);
+            return new ResponseDto(200, "success", "Role saved!", role);
+        } catch (RuntimeException e) {
+            return new ResponseDto(501, "failed", e.getMessage(), null);
         } catch (Exception e) {
-            return new ResponseDto(400, "error", e.getMessage(), null);
+            return new ResponseDto(400, "failed", "Something wrong: " + e.getMessage(), null);
         }
     }
 
     public ResponseDto deleteRole(int id) {
         try {
-            Optional<Role> role = roleRepository.findById(id);
+            Role role = roleRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Record not found!"));
 
-            if (role.isPresent()) {
-                roleRepository.deleteById(id);
-            }
+            roleRepository.deleteById(id);
+            return new ResponseDto(200, "success", "Record deleted!", role);
 
-            return new ResponseDto(200, "success", role.isEmpty() ? "Record not found" : "Record deleted", role);
+        } catch (RuntimeException e) {
+            return new ResponseDto(501, "failed", e.getMessage(), null);
         } catch (Exception e) {
-            return new ResponseDto(400, "error", e.getMessage(), null);
+            return new ResponseDto(400, "failed", "Something went wrong: " + e.getMessage(), null);
+        }
+    }
+
+    public ResponseDto putRole(Map<String, Object> payload, int id) {
+        try {
+            Role role = roleRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Record not found!"));
+
+            role.setName((String) payload.get("name"));
+            roleRepository.save(role);
+
+            return new ResponseDto(200, "success", "Role updated!", role);
+        } catch (RuntimeException e) {
+            return new ResponseDto(501, "failed", e.getMessage(), null);
+        } catch (Exception e) {
+            return new ResponseDto(400, "failed", "Something wrong: " + e.getMessage(), null);
         }
     }
 }

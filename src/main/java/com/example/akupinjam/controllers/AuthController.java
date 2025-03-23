@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,8 +33,9 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> register(@RequestHeader(value = "Authorization", required = false) String token, @RequestBody Map<String, Object> payload) {
         try {
+            
             ResponseDto responseDto = authServices.register(payload);
 
             return ResponseEntity.status(responseDto.getStatusCode()).body(responseDto);
