@@ -1,9 +1,12 @@
 package com.example.akupinjam.configs;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -22,28 +25,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException{
-        final String authHeader = request.getHeader("Authorization");
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+            Claims claims = jwtUtil.extractAllClaims(token);
+            String username = claims.getSubject();
+            String authority = claims.get("authorities", String.class); // Ambil authority dari token
 
-        final String jwtToken = authHeader.substring(7);
-        final String email = jwtUtil.extractEmail(jwtToken);
-
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            Claims claims = jwtUtil.extractAllClaims(jwtToken);
-            Integer roleId = claims.get("role_id", Integer.class);
-
-            if (jwtUtil.validateToken(jwtToken)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email, null, null);
-
-                authToken.setDetails(roleId);
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            if (username != null && authority != null) {
+                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(authority));
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        username, null, authorities);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-        } 
+        }
 
         filterChain.doFilter(request, response);
     }

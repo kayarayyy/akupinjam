@@ -29,7 +29,7 @@ public class UserController {
 
     // Get user by ID
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable int id) {
+    public ResponseEntity<User> getUserById(@PathVariable String id) {
         Optional<User> user = userRepository.findById(id);
         return user.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -46,33 +46,33 @@ public class UserController {
     }
 
     // Update user
-    // @PutMapping("/{id}")
-    // public ResponseEntity<User> updateUser(@PathVariable int id, @RequestBody User userDetails) {
-    //     Optional<User> optionalUser = userRepository.findById(id);
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User userDetails) {
+        Optional<User> optionalUser = userRepository.findById(id);
 
-    //     if (optionalUser.isPresent()) {
-    //         User user = optionalUser.get();
-    //         user.setName(userDetails.getName());
-    //         user.setEmail(userDetails.getEmail());
-    //         user.setPassword(userDetails.getPassword());
-    //         user.setNip(userDetails.getNip());
-    //         user.setAlamat(userDetails.getAlamat());
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            user.setName(userDetails.getName());
+            user.setEmail(userDetails.getEmail());
+            user.setPassword(userDetails.getPassword());
+            user.setRole(userDetails.getRole());
+            user.setActive(userDetails.isActive());
 
-    //         if (roleRepository.existsById(userDetails.getRole().getId())) {
-    //             user.setRole(userDetails.getRole());
-    //             userRepository.save(user);
-    //             return ResponseEntity.ok(user);
-    //         } else {
-    //             return ResponseEntity.badRequest().build();
-    //         }
-    //     }
+            if (roleRepository.existsById(userDetails.getRole().getId())) {
+                user.setRole(userDetails.getRole());
+                userRepository.save(user);
+                return ResponseEntity.ok(user);
+            } else {
+                return ResponseEntity.badRequest().build();
+            }
+        }
 
-    //     return ResponseEntity.notFound().build();
-    // }
+        return ResponseEntity.notFound().build();
+    }
 
     // Delete user
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable int id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         Optional<User> user = userRepository.findById(id);
 
         if (user.isPresent()) {

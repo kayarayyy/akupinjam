@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "loan_request")
 public class LoanRequest {
     @Id
+    @Column(length = 20)
     private String id;
 
     @Column(nullable = false)
@@ -51,6 +52,6 @@ public class LoanRequest {
     @PrePersist
     public void generateUniqueId() {
         String timeStamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HHmmss"));
-        this.id = "LR" + customer + timeStamp;
+        this.id = "LR" + customer.getId() + timeStamp;
     }
 }

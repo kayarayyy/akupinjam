@@ -2,6 +2,7 @@ package com.example.akupinjam.services;
 
 import java.util.Map;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,6 @@ import com.example.akupinjam.models.User;
 import com.example.akupinjam.repositories.AuthRepository;
 import com.example.akupinjam.repositories.RoleRepository;
 import com.example.akupinjam.utils.JwtUtil;
-
 
 @Service
 public class AuthService {
@@ -29,6 +29,9 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private EmailService emailService;
+
     public ResponseDto login(Map<String, Object> payload) {
         try {
             String email = (String) payload.get("email");
@@ -39,7 +42,7 @@ public class AuthService {
                 return new ResponseDto(401, "failed", "Wrong password!", null);
             }
 
-            String token = jwtUtil.generateToken(email, user.getRole().getId());
+            String token = jwtUtil.generateToken(email, user.getRole());
             AuthDto authResponseDto = new AuthDto(
                     user.getEmail(),
                     user.getName(),
@@ -52,25 +55,20 @@ public class AuthService {
         }
     }
 
-    public ResponseDto register(Map<String, Object> payload) {
+    public ResponseDto register(Map<String, Object> payload, String token) {
         try {
             String email = (String) payload.get("email");
             String name = (String) payload.get("name");
             boolean isActive = (boolean) payload.get("is_active");
             String rawPassword = (String) payload.get("password");
-            int roleId = (int) payload.get("role_id");
-            
-            
+            String roleId = (String) payload.get("role_id");
+
             // Variabel untuk menyimpan role
             Role role;
             try {
-                Integer roleIdFromToken = jwtUtil.getRoleIdFromToken();
-
-                Role roleFromToken = roleRepository.findById(roleIdFromToken)
-                        .orElseThrow(() -> new RuntimeException("Role from token not found!"));
 
                 // Jika role dari token adalah Super Admin, pilih role sesuai input
-                if (roleFromToken.getName().equalsIgnoreCase("superadmin")) {
+                if (jwtUtil.isSuperadmin(token)) {
                     role = roleRepository.findById(roleId)
                             .orElseThrow(() -> new RuntimeException("Role not found!"));
                 } else {
@@ -84,12 +82,30 @@ public class AuthService {
                         .orElseThrow(() -> new RuntimeException("Customer role not found!"));
             }
 
+            // For create role w/out auth
+            // Role role = roleRepository.findById(roleId)
+            // .orElseThrow(() -> new RuntimeException("Role not found!"));
+
             User user = new User();
             user.setEmail(email);
             user.setName(name);
             user.setActive(isActive);
-            user.setPassword(passwordEncoder.encode(rawPassword));
             user.setRole(role);
+
+            if (role.getName().equals("customer")) {
+                String subject = "Registrasi Akun Berhasil - AKuPinjam";
+                String body = "Selamat, akun Anda telah dibuat.\n\n"
+                        + "Berikut adalah detail akun Anda:\n"
+                        + "Nama: " + name + "\n"
+                        + "Email: " + email + "\n"
+                        + "Terima kasih.";
+                emailService.sendEmail(user.getEmail(), subject,
+                        body);
+            } else {
+                rawPassword = RandomStringUtils.randomAlphanumeric(8);
+                emailService.sendInitialPasswordEmail(email, rawPassword);
+            }
+            user.setPassword(passwordEncoder.encode(rawPassword));
 
             authRepository.save(user);
 

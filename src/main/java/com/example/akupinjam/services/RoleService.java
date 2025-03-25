@@ -30,7 +30,7 @@ public class RoleService {
         }
     }
 
-    public ResponseDto getRoleById(int id) {
+    public ResponseDto getRoleById(String id) {
         try {
             Optional<Role> role = roleRepository.findById(id);
 
@@ -57,7 +57,7 @@ public class RoleService {
         }
     }
 
-    public ResponseDto deleteRole(int id) {
+    public ResponseDto deleteRole(String id) {
         try {
             Role role = roleRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Record not found!"));
@@ -72,7 +72,7 @@ public class RoleService {
         }
     }
 
-    public ResponseDto putRole(Map<String, Object> payload, int id) {
+    public ResponseDto putRole(Map<String, Object> payload, String id) {
         try {
             Role role = roleRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Record not found!"));

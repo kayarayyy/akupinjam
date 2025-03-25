@@ -35,8 +35,9 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestHeader(value = "Authorization", required = false) String token, @RequestBody Map<String, Object> payload) {
         try {
+            System.out.println(token);
             
-            ResponseDto responseDto = authServices.register(payload);
+            ResponseDto responseDto = authServices.register(payload, token);
 
             return ResponseEntity.status(responseDto.getStatusCode()).body(responseDto);
         } catch (Exception e) {
