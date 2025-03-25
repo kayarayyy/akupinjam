@@ -7,10 +7,10 @@ import lombok.*;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResponseDto {
+public class ResponseDto<T> {
     @JsonProperty("status_code")
     private int statusCode;
     private String status;
     private String message;
-    private Object data;
+    private T data;
 }
