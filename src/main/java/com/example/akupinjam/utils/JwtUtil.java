@@ -77,15 +77,21 @@ public class JwtUtil {
     }
 
     public boolean isSuperadmin(String token) {
-        if (token != null && token.startsWith("Bearer ")) {
+        if (token == null || token.trim().isEmpty()) {
+            return false; // Jika tidak ada token, bukan superadmin
+        }
+    
+        if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
+    
         Claims claims = extractAllClaims(token);
         String roleId = claims.get("role", String.class);
         Optional<Role> role = roleRepository.findById(roleId);
-        return role.isPresent() ? role.get().getName().equals("superadmin") : false;
+    
+        return role.isPresent() && role.get().getName().equals("superadmin");
     }
-
+    
     public String getRoleIdFromToken() {
         return (String) SecurityContextHolder.getContext().getAuthentication().getDetails();
     }

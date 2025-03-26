@@ -20,13 +20,11 @@ public class LoanRequestController {
     LoanRequestService loanRequestService;
 
     @PostMapping
-    public ResponseEntity<?> createLoanRequest(@RequestBody Map<String, Object> payload){
-        try {
-            ResponseDto responseDto = loanRequestService.createLoanRequest(payload);
+    public ResponseEntity<ResponseDto> createLoanRequest(@RequestBody Map<String, Object> payload) {
 
-            return ResponseEntity.status(responseDto.getStatusCode()).body(responseDto);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        ResponseDto responseDto = loanRequestService.createLoanRequest(payload);
+
+        return ResponseEntity.status(responseDto.getStatusCode()).body(responseDto);
+
     }
 }

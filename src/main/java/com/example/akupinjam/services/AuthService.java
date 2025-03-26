@@ -1,14 +1,15 @@
 package com.example.akupinjam.services;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.akupinjam.dto.AuthDto;
-import com.example.akupinjam.exceptions.ResourceNotFoundException;
 import com.example.akupinjam.models.Role;
 import com.example.akupinjam.models.User;
 import com.example.akupinjam.repositories.AuthRepository;
@@ -16,8 +17,9 @@ import com.example.akupinjam.utils.JwtUtil;
 
 @Service
 public class AuthService {
+
     @Autowired
-    private AuthRepository authRepository;
+    private UserService userService;
 
     @Autowired
     private RoleService roleService;
@@ -32,60 +34,85 @@ public class AuthService {
     private EmailService emailService;
 
     public AuthDto login(String email, String rawPassword) {
-        User user = authRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = userService.getUserByEmail(email);
 
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new IllegalArgumentException("Wrong password!");
-        }
+        validatePassword(rawPassword, user.getPassword());
 
         String token = jwtUtil.generateToken(email, user.getRole());
 
         return new AuthDto(
-            user.getEmail(),
-            user.getName(),
-            user.getRole(),
-            user.isActive(),
-            token
-        );
+                user.getEmail(),
+                user.getName(),
+                user.getRole(),
+                user.isActive(),
+                token);
     }
 
+    @Transactional
     public User register(Map<String, Object> payload, String token) {
-        String email = (String) payload.get("email");
-        String name = (String) payload.get("name");
-        boolean isActive = (boolean) payload.get("is_active");
-        String rawPassword = (String) payload.get("password");
-        String roleId = (String) payload.get("role_id");
+        // Validasi input agar tidak null
+        String email = Objects.toString(payload.get("email"), "").trim();
+        String name = Objects.toString(payload.get("name"), "").trim();
+        String rawPassword = Objects.toString(payload.get("password"), "").trim();
+        String roleId = Objects.toString(payload.get("role_id"), "").trim();
+        boolean isActive = Boolean.parseBoolean(Objects.toString(payload.get("is_active"), "false"));
 
-        Role role = jwtUtil.isSuperadmin(token) ? 
-            roleService.getRoleById(roleId) : 
-            roleService.getRoleByName("customer");
+        if (email.isEmpty() || name.isEmpty() || rawPassword.isEmpty()) {
+            throw new IllegalArgumentException("Email, name, and password must not be empty");
+        }
+
+        // Jika token null, default role adalah "customer"
+        Role role = (token != null && jwtUtil.isSuperadmin(token))
+                ? roleService.getRoleById(roleId)
+                : roleService.getRoleByName("customer");
 
         User user = new User();
         user.setEmail(email);
         user.setName(name);
         user.setActive(isActive);
         user.setRole(role);
+        user.setPassword(rawPassword);
 
         if (role.getName().equals("customer")) {
-            String subject = "Registrasi Akun Berhasil - AKuPinjam";
-            String body = "Selamat, akun Anda telah dibuat.\n\n"
-                    + "Berikut adalah detail akun Anda:\n"
-                    + "Nama: " + name + "\n"
-                    + "Email: " + email + "\n"
-                    + "Terima kasih.";
-            emailService.sendEmail(user.getEmail(), subject, body);
+            userService.createUser(user);
+            
+            sendCustomerRegistrationEmail(user);
         } else {
             rawPassword = RandomStringUtils.randomAlphanumeric(8);
+            // user.setPassword(passwordEncoder.encode(rawPassword));
+            userService.createUser(user);
             emailService.sendInitialPasswordEmail(email, rawPassword);
         }
-        user.setPassword(passwordEncoder.encode(rawPassword));
 
-        return authRepository.save(user);
+        return user;
+
     }
 
     public User getUserByEmail(String email) {
-        return authRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User with email " + email + " not found!"));
+        return userService.getUserByEmail(email);
+    }
+
+    private void sendCustomerRegistrationEmail(User user) {
+        String subject = "Registrasi Akun Berhasil - AKuPinjam";
+        String body = generateRegistrationEmailBody(user.getName(), user.getEmail());
+        emailService.sendEmail(user.getEmail(), subject, body);
+    }
+
+    private String generateRegistrationEmailBody(String name, String email) {
+        return String.format(
+                "Halo " + name + ",\n\n" +
+                        "Selamat! Akun Anda telah berhasil dibuat di AKuPinjam.\n\n" +
+                        "Berikut adalah detail akun Anda:\n" +
+                        "Nama: " + name + "\n" +
+                        "Email: " + email + "\n\n" +
+                        "Anda sekarang dapat menggunakan layanan kami. Jika ada pertanyaan, hubungi support kami.\n\n" +
+                        "Terima kasih,\n" +
+                        "Tim AKuPinjam");
+    }
+
+    private void validatePassword(String rawPassword, String encodedPassword) {
+        if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
+            throw new IllegalArgumentException("Wrong password!");
+        }
     }
 }

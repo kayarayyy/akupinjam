@@ -21,12 +21,12 @@ public class RoleService {
 
     public Role getRoleById(String id) {
         return roleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Role with ID " + id + " not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found!"));
     }
 
     public Role getRoleByName(String name) {
         return roleRepository.findByName(name)
-                .orElseThrow(() -> new ResourceNotFoundException("Role with ID " + name + " not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found!"));
     }
 
     public Role createRole(Role role) {
@@ -35,7 +35,7 @@ public class RoleService {
 
     public Role updateRole(String id, Role updatedRole) {
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Role with ID " + id + " not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found!"));
 
         role.setName(updatedRole.getName());
         return roleRepository.save(role);
@@ -43,7 +43,7 @@ public class RoleService {
 
     public void deleteRole(String id) {
         roleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Role with ID " + id + " not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found!"));
         
         roleRepository.deleteById(id);
     }

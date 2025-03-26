@@ -1,5 +1,8 @@
 package com.example.akupinjam.models;
 
+import java.util.Set;
+import java.util.UUID;
+
 import org.apache.commons.lang3.RandomStringUtils;
 
 import jakarta.persistence.*;
@@ -8,21 +11,15 @@ import lombok.*;
 @Entity
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "roles")
 
 public class Role {
     @Id
-    @Column(length = 10)
-    private String id;
-
-    private String generateRandomId() {
-        return RandomStringUtils.randomAlphanumeric(10);
-    }
-
-    public Role() {
-        this.id = generateRandomId();
-    }
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @Column(nullable = false, unique = true)
     private String name;
+
 }

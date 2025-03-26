@@ -1,85 +1,50 @@
 package com.example.akupinjam.controllers;
 
+import com.example.akupinjam.dto.ResponseDto;
 import com.example.akupinjam.models.User;
-import com.example.akupinjam.repositories.RoleRepository;
-import com.example.akupinjam.repositories.UserRepository;
-
+import com.example.akupinjam.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("api/v1/users")
 public class UserController {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
-    @Autowired
-    private RoleRepository roleRepository;
-
-    // Get all users
     @GetMapping
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public ResponseEntity<ResponseDto> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(new ResponseDto(200, "success", users.size() + " users found", users));
     }
 
-    // Get user by ID
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable String id) {
-        Optional<User> user = userRepository.findById(id);
-        return user.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<ResponseDto> getUserById(@PathVariable String id) {
+        User user = userService.getUserById(id);
+        return ResponseEntity.ok(new ResponseDto(200, "success", "User found", user));
     }
 
-    // Create a new user
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        if (roleRepository.existsById(user.getRole().getId())) {
-            User savedUser = userRepository.save(user);
-            return ResponseEntity.ok(savedUser);
-        }
-        return ResponseEntity.badRequest().build();
+    public ResponseEntity<ResponseDto> createUser(@RequestBody User user) {
+        User createdUser = userService.createUser(user);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ResponseDto(201, "success", "User created", createdUser));
     }
 
-    // Update user
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User userDetails) {
-        Optional<User> optionalUser = userRepository.findById(id);
-
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            user.setName(userDetails.getName());
-            user.setEmail(userDetails.getEmail());
-            user.setPassword(userDetails.getPassword());
-            user.setRole(userDetails.getRole());
-            user.setActive(userDetails.isActive());
-
-            if (roleRepository.existsById(userDetails.getRole().getId())) {
-                user.setRole(userDetails.getRole());
-                userRepository.save(user);
-                return ResponseEntity.ok(user);
-            } else {
-                return ResponseEntity.badRequest().build();
-            }
-        }
-
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<ResponseDto> updateUser(@PathVariable String id, @RequestBody User user) {
+        User updatedUser = userService.updateUser(id, user);
+        return ResponseEntity.ok(new ResponseDto(200, "success", "User updated", updatedUser));
     }
 
-    // Delete user
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
-        Optional<User> user = userRepository.findById(id);
-
-        if (user.isPresent()) {
-            userRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<ResponseDto> deleteUser(@PathVariable String id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok(new ResponseDto(200, "success", "User deleted", null));
     }
 }

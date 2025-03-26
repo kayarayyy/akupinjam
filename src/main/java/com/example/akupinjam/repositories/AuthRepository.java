@@ -9,6 +9,5 @@ import com.example.akupinjam.models.User;
 
 @Repository
 public interface AuthRepository extends JpaRepository<User, Integer> {
-    boolean existsByEmail(String name);
-    Optional<User> findByEmail(String email);
+    
 }

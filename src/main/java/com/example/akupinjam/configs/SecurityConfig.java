@@ -34,8 +34,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**", "/api/v1/users/**").permitAll()
-                        .requestMatchers("/api/v1/roles/**").hasAuthority("superadmin")
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/roles/**", "/api/v1/users/**").hasAuthority("superadmin")
                         .requestMatchers("/api/v1/loan-requests/**").hasAuthority("customer")
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
