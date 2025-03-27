@@ -2,7 +2,6 @@ package com.example.akupinjam.models;
 
 import java.util.UUID;
 
-import org.apache.commons.lang3.RandomStringUtils;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,7 +26,7 @@ public class User {
     private String password;
 
     @ManyToOne
-    @JoinColumn(name = "role_id", referencedColumnName = "id")
+    @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
     @Column(nullable = false)

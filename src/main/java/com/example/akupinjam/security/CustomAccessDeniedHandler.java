@@ -13,10 +13,13 @@ import java.io.IOException;
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException)
+    public void handle(HttpServletRequest request, HttpServletResponse response,
+            AccessDeniedException accessDeniedException)
             throws IOException, ServletException {
+        System.out.println("AccessDeniedHandler triggered for: " + request.getRequestURI());
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json");
-        response.getWriter().write("{\"status\":\"failed\",\"status_code\":403,\"message\":\"Forbidden: You don't have permission to access this resource\",\"data\":null}");
+        response.getWriter().write(
+                "{\"status\":\"failed\",\"status_code\":403,\"message\":\"Forbidden: You don't have permission to access this resource\",\"data\":null}");
     }
 }

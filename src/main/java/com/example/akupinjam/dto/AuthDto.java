@@ -1,6 +1,8 @@
 package com.example.akupinjam.dto;
 
 
+import java.util.List;
+
 import com.example.akupinjam.models.Role;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -17,4 +19,5 @@ public class AuthDto {
     @JsonProperty("is_active")
     private boolean isActive;
     private String token;
+    private List<String> features;
 }

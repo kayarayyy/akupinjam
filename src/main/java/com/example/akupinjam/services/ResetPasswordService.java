@@ -44,12 +44,10 @@ public class ResetPasswordService {
 
         ResetPassword resetPassword;
         if (existingReset.isPresent()) {
-            System.out.println("masuk");
             // Jika sudah ada permintaan reset yang masih berlaku, perbarui expired time
             resetPassword = existingReset.get();
             resetPassword.setExpiredAt(LocalDateTime.now().plusHours(24));
         } else {
-            System.out.println("masuk");
             // Jika belum ada, buat reset password baru
             resetPassword = new ResetPassword();
             resetPassword.setUser(user);

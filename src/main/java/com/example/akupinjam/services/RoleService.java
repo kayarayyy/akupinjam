@@ -1,7 +1,7 @@
 package com.example.akupinjam.services;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,7 +20,7 @@ public class RoleService {
     }
 
     public Role getRoleById(String id) {
-        return roleRepository.findById(id)
+        return roleRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found!"));
     }
 
@@ -34,7 +34,7 @@ public class RoleService {
     }
 
     public Role updateRole(String id, Role updatedRole) {
-        Role role = roleRepository.findById(id)
+        Role role = roleRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found!"));
 
         role.setName(updatedRole.getName());
@@ -42,9 +42,9 @@ public class RoleService {
     }
 
     public void deleteRole(String id) {
-        roleRepository.findById(id)
+        roleRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found!"));
         
-        roleRepository.deleteById(id);
+        roleRepository.deleteById(UUID.fromString(id));
     }
 }

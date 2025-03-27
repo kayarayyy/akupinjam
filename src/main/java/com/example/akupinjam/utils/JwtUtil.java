@@ -2,9 +2,12 @@ package com.example.akupinjam.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.akupinjam.models.Role;
 import com.example.akupinjam.repositories.RoleRepository;
+import com.example.akupinjam.security.CustomUserDetails;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -29,7 +33,7 @@ public class JwtUtil {
     private String secretKey;
 
     @Value("${jwt.expiration}")
-    private long expiration;
+    private int expiration;
 
     @Autowired
     private RoleRepository roleRepository;
@@ -39,14 +43,28 @@ public class JwtUtil {
         return new SecretKeySpec(keyBytes, SignatureAlgorithm.HS256.getJcaName());
     }
 
-    public String generateToken(String email, Role role) {
+    public String generateToken(Authentication authentication) {
+        String username;
+        String roleId;
+        if (authentication.getPrincipal() instanceof CustomUserDetails userPrincipal) {
+            username = userPrincipal.getUsername();
+            roleId = userPrincipal.getUser().getRole().getId().toString();
+        } else {
+            throw new IllegalArgumentException("Unsupported principal type");
+        }
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roleId", roleId);
+        Date now = new Date();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.add(calendar.HOUR, expiration);
+        Date expiredDate = calendar.getTime();
         return Jwts.builder()
-                .setSubject(email)
-                .claim("role", role.getId())
-                .claim("authorities", role.getName())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .setSubject(username)
+                .addClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(expiredDate)
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -76,22 +94,31 @@ public class JwtUtil {
                 .getBody();
     }
 
+    public String getUsername(String jwt) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(jwt)
+                .getBody()
+                .getSubject();
+    }
+
     public boolean isSuperadmin(String token) {
         if (token == null || token.trim().isEmpty()) {
             return false; // Jika tidak ada token, bukan superadmin
         }
-    
+
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
-    
+
         Claims claims = extractAllClaims(token);
-        String roleId = claims.get("role", String.class);
-        Optional<Role> role = roleRepository.findById(roleId);
-    
-        return role.isPresent() && role.get().getName().equals("superadmin");
+        String roleId = claims.get("roleId", String.class);
+        Optional<Role> role = roleRepository.findById(UUID.fromString(roleId));
+
+        return role.isPresent() && role.get().getName().equals("SUPERADMIN");
     }
-    
+
     public String getRoleIdFromToken() {
         return (String) SecurityContextHolder.getContext().getAuthentication().getDetails();
     }

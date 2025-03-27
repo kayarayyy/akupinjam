@@ -6,13 +6,9 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.example.akupinjam.models.Role;
-
+import com.example.akupinjam.models.Feature;
 
 @Repository
-public interface RoleRepository extends JpaRepository<Role, UUID> {
-    
-    boolean existsByName(String name);
-
-    Optional<Role> findByName(String string);
+public interface FeatureRepository extends JpaRepository<Feature, UUID> {
+    Optional<Feature> findByName(String name);
 }

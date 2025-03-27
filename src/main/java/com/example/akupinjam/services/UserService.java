@@ -32,7 +32,7 @@ public class UserService {
 
     // Get user by ID
     public User getUserById(String id) {
-        return userRepository.findById(id)
+        return userRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
     }
 
@@ -51,7 +51,7 @@ public class UserService {
                 .ifPresent(u -> {
                     throw new IllegalArgumentException("User already exists");
                 });
-        Optional<Role> role = roleRepository.findById(user.getRole().getId().toString());
+        Optional<Role> role = roleRepository.findById(user.getRole().getId());
 
         if (role.isEmpty()) {
             throw new ResourceNotFoundException("Role not found!");
@@ -63,7 +63,7 @@ public class UserService {
 
     // Update user
     public User updateUser(String id, User userDetails) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
         user.setName(userDetails.getName());
@@ -71,7 +71,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
         user.setActive(userDetails.isActive());
 
-        Optional<Role> role = roleRepository.findById(userDetails.getRole().getId().toString());
+        Optional<Role> role = roleRepository.findById(userDetails.getRole().getId());
         if (role.isEmpty()) {
             throw new ResourceNotFoundException("Role not found!");
         }
@@ -82,9 +82,9 @@ public class UserService {
 
     // Delete user
     public void deleteUser(String id) {
-        User user = userRepository.findById(id)
+        userRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
-        userRepository.deleteById(id);
+        userRepository.deleteById(UUID.fromString(id));
     }
 }
