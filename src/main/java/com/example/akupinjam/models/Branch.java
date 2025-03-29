@@ -2,7 +2,7 @@ package com.example.akupinjam.models;
 
 import java.util.UUID;
 
-import com.example.akupinjam.enums.City;
+import com.example.akupinjam.models.enums.City;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

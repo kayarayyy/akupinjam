@@ -27,7 +27,7 @@ public class Role implements GrantedAuthority {
 
     @Getter
     @Column(name = "name", nullable = false, unique = true)
-    @JsonIgnore
+    // @JsonIgnore
     private String name;
 
     @Override

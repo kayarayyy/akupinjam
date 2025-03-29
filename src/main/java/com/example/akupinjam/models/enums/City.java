@@ -1,4 +1,4 @@
-package com.example.akupinjam.enums;
+package com.example.akupinjam.models.enums;
 
 
 public enum City {
