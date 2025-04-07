@@ -1,14 +1,10 @@
 package com.example.akupinjam.controllers;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,11 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.akupinjam.dto.AuthDto;
 import com.example.akupinjam.dto.ResponseDto;
-import com.example.akupinjam.exceptions.ResourceNotFoundException;
 import com.example.akupinjam.models.User;
 import com.example.akupinjam.services.AuthService;
 import com.example.akupinjam.services.ResetPasswordService;
 import com.example.akupinjam.utils.ResponseUtil;
+import org.springframework.web.bind.annotation.PutMapping;
+
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -45,10 +42,18 @@ public class AuthController {
 
     }
 
+    @PostMapping("/login-employee")
+    public ResponseEntity<ResponseDto> loginEmployee(@RequestBody Map<String, Object> payload) {
+        AuthDto authDto = authService.login_employee(
+                (String) payload.get("nip"),
+                (String) payload.get("password"));
+        return ResponseUtil.success(authDto, "Login successful");
+
+    }
+
     @PostMapping("/register")
     public ResponseEntity<ResponseDto> register(@RequestHeader(value = "Authorization", required = false) String token,
             @RequestBody Map<String, Object> payload) {
-        System.out.println(payload);
         User user = authService.register(payload, token);
         return ResponseUtil.created(new AuthDto(
                 user.getEmail(),
@@ -58,6 +63,14 @@ public class AuthController {
                 token,
                 Arrays.asList("")), "Register successful");
 
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<ResponseDto> putChangePassword(@RequestHeader(value = "Authorization", required = false) String token,
+    @RequestBody Map<String, Object> payload) {
+        authService.changePassword(payload, token);
+        
+        return ResponseUtil.success(null, "change password success");
     }
 
     @GetMapping("/reset-password")

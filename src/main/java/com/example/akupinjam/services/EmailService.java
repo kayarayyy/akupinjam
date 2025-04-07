@@ -2,18 +2,18 @@ package com.example.akupinjam.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+
+import com.example.akupinjam.models.User;
 
 @Service
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
     private final JavaMailSender emailSender;
 
-    @Autowired
     public EmailService(JavaMailSender emailSender) {
         this.emailSender = emailSender;
     }
@@ -38,7 +38,6 @@ public class EmailService {
         }
     }
 
-    // 🔹 Kirim password sementara saat register pegawai
     public void sendInitialPasswordEmail(String to, String generatedPassword) {
         if (generatedPassword == null || generatedPassword.isEmpty()) {
             logger.error("Gagal mengirim email: password sementara tidak boleh kosong.");
@@ -56,20 +55,41 @@ public class EmailService {
         sendEmail(to, subject, body);
     }
 
-    // 🔹 Kirim token reset password ke email user
-    public void sendResetPasswordToken(String to, String resetToken) {
-        if (resetToken == null || resetToken.isEmpty()) {
-            logger.error("Gagal mengirim email: token reset tidak boleh kosong.");
-            throw new IllegalArgumentException("Token reset tidak boleh kosong.");
-        }
 
-        String subject = "Reset Password - SakuBCA";
-        String body = "Anda telah meminta reset password.\n\n"
-                + "Gunakan token berikut untuk mengatur ulang password Anda:\n"
-                + resetToken + "\n\n"
-                + "Token ini berlaku selama 15 menit.\n\n"
-                + "Jika Anda tidak meminta reset password, abaikan email ini.";
+    public void sendRequestResetPassword(String name, String email, String id) {
+        String subject = "Reset Password - AKuPinjam";
+        String body = String.format(
+                "Akun Anda meminta reset password di AKuPinjam.\n\n" +
+                        "Abaikan jika ini bukan Anda,\n\n" +
+                        "Berikut adalah detail akun Anda:\n" +
+                        "Nama: " + name + "\n" +
+                        "Email: " + email + "\n\n" +
+                        "Klik link di bawah untuk mengatur ulang password Anda:\n\n" +
+                        generateResetLink(id) + "\n\n" +
+                        "Link ini hanya berlaku selama 24 jam.\n\n" +
+                        "Terima kasih,\n" +
+                        "Tim AKuPinjam");
 
-        sendEmail(to, subject, body);
+        sendEmail(email, subject, body);
     }
+
+    private String generateResetLink(String id) {
+        String baseUrl = "https://app.akupinjam.com/reset-password/"; // Sesuaikan dengan domain frontend
+        return baseUrl + id.toString();
+    }
+
+    public void sendCustomerRegistrationEmail(User user) {
+        String subject = "Registrasi Akun Berhasil - AKuPinjam";
+        String body = String.format(
+            "Halo " + user.getName() + ",\n\n" +
+                    "Selamat! Akun Anda telah berhasil dibuat di AKuPinjam.\n\n" +
+                    "Berikut adalah detail akun Anda:\n" +
+                    "Nama: " + user.getName() + "\n" +
+                    "Email: " + user.getEmail() + "\n\n" +
+                    "Anda sekarang dapat menggunakan layanan kami. Jika ada pertanyaan, hubungi support kami.\n\n" +
+                    "Terima kasih,\n" +
+                    "Tim AKuPinjam");
+        sendEmail(user.getEmail(), subject, body);
+    }
+
 }

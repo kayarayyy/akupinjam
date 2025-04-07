@@ -81,7 +81,7 @@ public class JwtUtil {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
+                .parseClaimsJws(trimToken(token))
                 .getBody()
                 .getSubject();
     }
@@ -103,9 +103,20 @@ public class JwtUtil {
                 .getSubject();
     }
 
+    public String trimToken(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return "";
+        }
+
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        return token;
+    }
     public boolean isSuperadmin(String token) {
         if (token == null || token.trim().isEmpty()) {
-            return false; // Jika tidak ada token, bukan superadmin
+            return false;// Jika tidak ada token, bukan superadmin
         }
 
         if (token.startsWith("Bearer ")) {

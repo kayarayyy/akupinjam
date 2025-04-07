@@ -56,4 +56,5 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                                 .body(new ResponseDto(403, "failed", ex.getMessage(), null));
         }
+
 }

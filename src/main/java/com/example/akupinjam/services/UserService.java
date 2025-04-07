@@ -1,5 +1,6 @@
 package com.example.akupinjam.services;
 
+import com.example.akupinjam.dto.UserDto;
 import com.example.akupinjam.exceptions.ResourceNotFoundException;
 import com.example.akupinjam.models.Role;
 import com.example.akupinjam.models.User;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -26,18 +28,29 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
 
     // Get all users
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDto> getAllUsers() {
+        return userRepository.findAll().stream().map(UserDto::fromEntity).collect(Collectors.toList());
     }
 
     // Get user by ID
-    public User getUserById(String id) {
-        return userRepository.findById(UUID.fromString(id))
+    public UserDto getUserById(String id) {
+        User user = userRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+        return UserDto.fromEntity(user);
     }
 
+    // return User with password for auth
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+    }
+    public User getUserByRefferal(String refferal) {
+        return userRepository.findByRefferal(refferal)
+        .orElseThrow(() -> new ResourceNotFoundException("Refferal not found!"));
+    }
+    // return User with password for auth
+    public User getUserByNip(String nip) {
+        return userRepository.findByNip(nip)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
     }
 
@@ -46,7 +59,7 @@ public class UserService {
     }
 
     // Create a new user
-    public User createUser(User user) {
+    public UserDto createUser(User user) {
         userRepository.findByEmail(user.getEmail())
                 .ifPresent(u -> {
                     throw new IllegalArgumentException("User already exists");
@@ -58,11 +71,12 @@ public class UserService {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+        user = userRepository.save(user);
+        return UserDto.fromEntity(user);
     }
 
     // Update user
-    public User updateUser(String id, User userDetails) {
+    public UserDto updateUser(String id, User userDetails) {
         User user = userRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
@@ -70,14 +84,15 @@ public class UserService {
         user.setEmail(userDetails.getEmail());
         user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
         user.setActive(userDetails.isActive());
-
+        user.setNip(userDetails.getNip());
         Optional<Role> role = roleRepository.findById(userDetails.getRole().getId());
         if (role.isEmpty()) {
             throw new ResourceNotFoundException("Role not found!");
         }
         user.setRole(role.get());
 
-        return userRepository.save(user);
+        user = userRepository.save(user);
+        return UserDto.fromEntity(user);
     }
 
     // Delete user

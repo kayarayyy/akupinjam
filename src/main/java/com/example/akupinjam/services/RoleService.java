@@ -30,7 +30,6 @@ public class RoleService {
     }
 
     public Role createRole(Role role) {
-        System.out.println(role);
         return roleRepository.save(role);
     }
 

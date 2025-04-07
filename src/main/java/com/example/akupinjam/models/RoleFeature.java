@@ -20,12 +20,12 @@ public class RoleFeature {
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "role_id", nullable = false)
+    @JoinColumn(name = "role_id", nullable = false,  referencedColumnName = "id")
     // @JsonIgnore
     private Role role;
     
     @ManyToOne
-    @JoinColumn(name = "feature_id", nullable = false)
+    @JoinColumn(name = "feature_id", nullable = false, referencedColumnName = "id")
     // @JsonIgnore
     private Feature feature;
 }

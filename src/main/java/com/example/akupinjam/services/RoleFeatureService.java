@@ -4,10 +4,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.akupinjam.dto.FeatureDto;
 import com.example.akupinjam.exceptions.ResourceNotFoundException;
 import com.example.akupinjam.models.Feature;
 import com.example.akupinjam.models.Role;
@@ -49,5 +51,16 @@ public class RoleFeatureService {
                 .orElseThrow(() -> new ResourceNotFoundException("Role Feature not found!"));
 
         roleFeatureRepository.deleteById(UUID.fromString(id));
+    }
+
+    public List<FeatureDto> getFeaturesByRoleId(UUID roleId) {
+        List<RoleFeature> roleFeatures = roleFeatureRepository.findByRoleId(roleId);
+
+        return roleFeatures.stream()
+            .map(rf -> FeatureDto.builder()
+                .id(rf.getFeature().getId())
+                .name(rf.getFeature().getName())
+                .build())
+            .collect(Collectors.toList());
     }
 }

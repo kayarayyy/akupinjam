@@ -12,4 +12,6 @@ import com.example.akupinjam.models.User;
 public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String name);
     Optional<User> findByEmail(String email);
+    Optional<User> findByNip(String nip);
+    Optional<User> findByRefferal(String refferal);
 }

@@ -2,6 +2,7 @@ package com.example.akupinjam.models;
 
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,18 +19,28 @@ public class User {
 
     @Column(nullable = false)
     private String name;
-    
+
     @Column(nullable = false, unique = true)
     private String email;
-    
+
     @Column(nullable = false)
     private String password;
 
     @ManyToOne
-    @JoinColumn(name = "role_id", nullable = false)
+    @JoinColumn(name = "role_id", nullable = false, referencedColumnName = "id")
     private Role role;
 
     @Column(nullable = false)
     private boolean isActive;
-}
 
+    @Column(nullable = true, unique = true)
+    private String nip;
+    
+    @Column(nullable = true, unique = true)
+    private String refferal;
+
+    @ManyToOne
+    @JoinColumn(name = "branch_id", nullable = true)
+    @JsonBackReference // Menandai bahwa ini referensi balik
+    private Branch branch;
+}
