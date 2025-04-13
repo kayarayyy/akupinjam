@@ -15,7 +15,7 @@ import com.example.akupinjam.exceptions.ResourceNotFoundException;
 import com.example.akupinjam.models.Branch;
 import com.example.akupinjam.models.enums.City;
 import com.example.akupinjam.repositories.BranchRepository;
-import com.example.akupinjam.utils.Haversine;
+import com.example.akupinjam.utils.LocationCheck;
 
 @Service
 public class BranchService {
@@ -23,7 +23,7 @@ public class BranchService {
     private BranchRepository branchRepository;
 
     @Autowired
-    private Haversine haversine;
+    private LocationCheck locationCheck;
 
     public List<BranchDto> getAllBranches() {
         return branchRepository.findAll().stream()
@@ -71,7 +71,7 @@ public class BranchService {
         List<Branch> branches = branchRepository.findAll();
         return branches.stream()
             .min(Comparator.comparingDouble(branch ->
-                haversine.countDistance(userLat, userLon, branch.getLatitude(), branch.getLongitude())))
+                locationCheck.countDistance(userLat, userLon, branch.getLatitude(), branch.getLongitude())))
             .orElseThrow(() -> new RuntimeException("No branches available"));
     }
 }

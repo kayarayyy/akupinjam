@@ -1,18 +1,25 @@
 package com.example.akupinjam.models.seeder;
 
 import com.example.akupinjam.models.Branch;
+import com.example.akupinjam.models.CustomerDetails;
 import com.example.akupinjam.models.Feature;
 import com.example.akupinjam.models.LoanRequest;
+import com.example.akupinjam.models.Plafond;
 import com.example.akupinjam.models.Role;
 import com.example.akupinjam.models.RoleFeature;
 import com.example.akupinjam.models.User;
 import com.example.akupinjam.models.enums.City;
+import com.example.akupinjam.models.enums.Plan;
 import com.example.akupinjam.repositories.BranchRepository;
+import com.example.akupinjam.repositories.CustomerDetailsRepository;
 import com.example.akupinjam.repositories.FeatureRepository;
 import com.example.akupinjam.repositories.LoanRequestRepository;
+import com.example.akupinjam.repositories.PlafondRepository;
 import com.example.akupinjam.repositories.RoleFeatureRepository;
 import com.example.akupinjam.repositories.RoleRepository;
 import com.example.akupinjam.repositories.UserRepository;
+import com.example.akupinjam.services.BranchService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +30,7 @@ import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class Seeder implements CommandLineRunner {
@@ -48,6 +56,15 @@ public class Seeder implements CommandLineRunner {
     @Autowired
     private LoanRequestRepository loanRequestRepository;
 
+    @Autowired
+    private PlafondRepository plafondRepository;
+
+    @Autowired
+    private CustomerDetailsRepository customerDetailsRepository;
+
+    @Autowired
+    private BranchService branchService;
+
     @Override
     @Transactional
     public void run(String... args) {
@@ -56,6 +73,8 @@ public class Seeder implements CommandLineRunner {
         seedRoleFeatures();
         seedUsers();
         seedBranches();
+        seedPlafond();
+        seedCustomerDetails();
         seedLoanRequests();
     }
 
@@ -82,6 +101,7 @@ public class Seeder implements CommandLineRunner {
             featureRepository.save(new Feature(null, "BRANCH_MANAGER_LOAN_ACTION", null));
             featureRepository.save(new Feature(null, "BACK_OFFICE_PROCEED", null));
             featureRepository.save(new Feature(null, "BACK_OFFICE_APPROVAL_DISBURSEMENT", null));
+            featureRepository.save(new Feature(null, "ASSIGN_MARKETING", null));
         }
     }
 
@@ -104,10 +124,12 @@ public class Seeder implements CommandLineRunner {
 
             Role branchManager = roleRepository.findByName("BRANCH_MANAGER").orElse(null);
             Feature branchManagerLoanAction = featureRepository.findByName("BRANCH_MANAGER_LOAN_ACTION").orElse(null);
-            
+            Feature branchManagerAssignMarketing = featureRepository.findByName("ASSIGN_MARKETING").orElse(null);
+
             Role backOffice = roleRepository.findByName("BACK_OFFICE").orElse(null);
             Feature backOfficeProceed = featureRepository.findByName("BACK_OFFICE_PROCEED").orElse(null);
-            Feature backOfficeApprovalDisbursement = featureRepository.findByName("BACK_OFFICE_APPROVAL_DISBURSEMENT").orElse(null);
+            Feature backOfficeApprovalDisbursement = featureRepository.findByName("BACK_OFFICE_APPROVAL_DISBURSEMENT")
+                    .orElse(null);
 
             if (superAdmin != null) {
                 if (manageRoles != null) {
@@ -145,6 +167,9 @@ public class Seeder implements CommandLineRunner {
                 if (branchManagerLoanAction != null) {
                     roleFeatureRepository.save(new RoleFeature(null, branchManager, branchManagerLoanAction));
                 }
+                if (branchManagerAssignMarketing != null) {
+                    roleFeatureRepository.save(new RoleFeature(null, branchManager, branchManagerAssignMarketing));
+                }
             }
 
             if (backOffice != null) {
@@ -161,11 +186,14 @@ public class Seeder implements CommandLineRunner {
     private void seedUsers() {
         if (userRepository.count() == 0) {
             createUser("Superadmin", "superadmin@gmail.com", "superadmin123", "SUPERADMIN", null, null);
-            createUser("Marketing", "marketing@gmail.com", "marketing123", "MARKETING", "2025123", "REF2025123");
+            createUser("Marketing", "marketing@gmail.com", "marketing123", "MARKETING", "2025111", "REF2025111");
+            createUser("Marketing 1", "marketing1@gmail.com", "marketing123", "MARKETING", "2025112", "REF2025112");
             createUser("Customer", "customer@gmail.com", "customer123", "CUSTOMER", null, null);
-            createUser("Branch Manager", "branchmanager@gmail.com", "branchmanager123", "BRANCH_MANAGER", "2025124",
+            createUser("Branch Manager", "branchmanager@gmail.com", "branchmanager123", "BRANCH_MANAGER", "2025121",
                     null);
-            createUser("Back Office", "backoffice@gmail.com", "backoffice123", "BACK_OFFICE", "2025125", null);
+            createUser("Branch Manager 1", "branchmanager1@gmail.com", "branchmanager123", "BRANCH_MANAGER", "2025122",
+                    null);
+            createUser("Back Office", "backoffice@gmail.com", "backoffice123", "BACK_OFFICE", "2025131", null);
         }
     }
 
@@ -195,22 +223,42 @@ public class Seeder implements CommandLineRunner {
 
         // Tambahkan Branch Manager & Marketing untuk Jakarta
         Branch jakartaBranch = branchRepository.findByName("Jakarta 1").orElse(null);
-        User branchManager = userRepository.findByEmail("branchmanager@gmail.com").orElse(null);
-        User marketingUser = userRepository.findByEmail("marketing@gmail.com").orElse(null);
+        User managerJakarta = userRepository.findByEmail("branchmanager@gmail.com").orElse(null);
+        User marketingJakarta = userRepository.findByEmail("marketing@gmail.com").orElse(null);
 
         if (jakartaBranch != null) {
-            if (branchManager != null) {
-                jakartaBranch.setBranchManager(branchManager);
+            if (managerJakarta != null) {
+                jakartaBranch.setBranchManager(managerJakarta);
             }
 
-            if (marketingUser != null) {
-                marketingUser.setBranch(jakartaBranch); // Set branch untuk user marketing
-                jakartaBranch.getMarketing().add(marketingUser);
+            if (marketingJakarta != null) {
+                marketingJakarta.setBranch(jakartaBranch); // Set branch untuk user marketing
+                jakartaBranch.getMarketing().add(marketingJakarta);
             }
 
             branchRepository.save(jakartaBranch); // Simpan perubahan
-            if (marketingUser != null) {
-                userRepository.save(marketingUser); // Simpan perubahan pada user
+            if (marketingJakarta != null) {
+                userRepository.save(marketingJakarta); // Simpan perubahan pada user
+            }
+        }
+
+        Branch bandungBranch = branchRepository.findByName("Bandung 1").orElse(null);
+        User managerBandung = userRepository.findByEmail("branchmanager1@gmail.com").orElse(null);
+        User marketingBandung = userRepository.findByEmail("marketing1@gmail.com").orElse(null);
+
+        if (bandungBranch != null) {
+            if (managerBandung != null) {
+                bandungBranch.setBranchManager(managerBandung);
+            }
+
+            if (marketingBandung != null) {
+                marketingBandung.setBranch(bandungBranch); // Set branch untuk user marketing
+                bandungBranch.getMarketing().add(marketingBandung);
+            }
+
+            branchRepository.save(bandungBranch); // Simpan perubahan
+            if (marketingBandung != null) {
+                userRepository.save(marketingBandung); // Simpan perubahan pada user
             }
         }
     }
@@ -218,17 +266,51 @@ public class Seeder implements CommandLineRunner {
     private void seedLoanRequests() {
         if (loanRequestRepository.count() == 0) {
             // Ambil customer dengan email customer@gmail.com
-            User customer = userRepository.findByEmail("customer@gmail.com").orElse(null);
+            Optional<CustomerDetails> customerDetails = customerDetailsRepository.findByUserEmail("customer@gmail.com");
+            User customer = customerDetails.get().getUser();
             if (customer != null) {
                 // Membuat LoanRequest dengan customer yang ditemukan
                 LoanRequest loanRequest = new LoanRequest();
-                loanRequest.setAmount("10000000"); // 10 juta
+                loanRequest.setAmount(1000000.00); // 1 juta
                 loanRequest.setCustomer(customer);
-                loanRequest.setLatitude(3.5952);
-                loanRequest.setLongitude(98.6722);
-
+                loanRequest.setLatitude(-6.2870583);
+                loanRequest.setLongitude(106.7820784);
+                Branch branch = branchService.findNearestBranch(loanRequest.getLatitude(), loanRequest.getLongitude());
+                loanRequest.setBranch(branch);
+                loanRequest.setBranchManager(branch.getBranchManager());
                 // Simpan LoanRequest ke dalam database
                 loanRequestRepository.save(loanRequest);
+            }
+        }
+    }
+
+    private void seedPlafond() {
+        if (plafondRepository.count() == 0) {
+            plafondRepository.save(new Plafond(null, 1000000.00, Plan.BRONZE, 5.0));
+            plafondRepository.save(new Plafond(null, 5000000.00, Plan.SILVER, 4.7));
+            plafondRepository.save(new Plafond(null, 10000000.00, Plan.GOLD, 4.0));
+            plafondRepository.save(new Plafond(null, 25000000.00, Plan.PLATINUM, 3.5));
+        }
+    }
+
+    private void seedCustomerDetails() {
+        if (userRepository.existsByEmail("customer@gmail.com") &&
+                plafondRepository.existsByPlan(Plan.BRONZE)) {
+
+            User customer = userRepository.findByEmail("customer@gmail.com").orElse(null);
+            Plafond bronzePlafond = plafondRepository.findByPlan(Plan.BRONZE).orElse(null);
+
+            if (customer != null && bronzePlafond != null) {
+                // Cek apakah data customer detail sudah pernah dibuat
+                boolean exists = customerDetailsRepository.findByUserEmail(customer.getEmail()).isPresent();
+                if (!exists) {
+                    CustomerDetails details = new CustomerDetails();
+                    details.setUser(customer);
+                    details.setPlafondPlan(bronzePlafond);
+                    details.setAvailablePlafond(bronzePlafond.getAmount());
+
+                    customerDetailsRepository.save(details);
+                }
             }
         }
     }

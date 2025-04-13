@@ -41,6 +41,6 @@ public class User {
 
     @ManyToOne
     @JoinColumn(name = "branch_id", nullable = true)
-    @JsonBackReference // Menandai bahwa ini referensi balik
+    @JsonBackReference
     private Branch branch;
 }

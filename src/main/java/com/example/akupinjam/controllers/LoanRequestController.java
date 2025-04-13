@@ -38,7 +38,7 @@ public class LoanRequestController {
                 .ok(new ResponseDto(200, "success", loanRequests.size() + " loan requests found", loanRequests));
     }
 
-    @Secured("FEATURE_MANAGE_LOAN_REQUESTS")
+    @Secured({"FEATURE_MANAGE_LOAN_REQUESTS", "FEATURE_ASSIGN_MARKETING"})
     @GetMapping("/{id}")
     public ResponseEntity<ResponseDto> getLoanRequestById(@PathVariable String id) {
         LoanRequest loanRequest = loanRequestService.getLoanRequestById(id);
@@ -50,6 +50,15 @@ public class LoanRequestController {
     public ResponseEntity<ResponseDto> updateLoanRequest(@PathVariable String id, @RequestBody Map<String, Object> payload, @RequestHeader(value = "Authorization", required = false) String token) {
         LoanRequest updatedLoanRequest = loanRequestService.updateLoanRequest(id, payload, token);
         return ResponseEntity.ok(new ResponseDto(200, "success", "Loan request updated", updatedLoanRequest));
+    }
+
+    @Secured("FEATURE_ASSIGN_MARKETING")
+    @PostMapping("/assign-marketing")
+    public ResponseEntity<ResponseDto> assignMarketing(@RequestBody Map<String, Object> payload) {
+        // LoanRequest updatedLoanRequest = 
+        String marketingEmail = payload.get("marketing_email").toString();
+        LoanRequest data = loanRequestService.assignNonRefferalRequestToMarketing(payload);
+        return ResponseEntity.ok(new ResponseDto(200, "success", "Loan request assigned to " + marketingEmail, data));
     }
 
     @Secured("FEATURE_MARKETING_LOAN_ACTION")

@@ -3,17 +3,24 @@ package com.example.akupinjam.services;
 import com.example.akupinjam.dto.LoanRequestDto;
 import com.example.akupinjam.exceptions.ResourceNotFoundException;
 import com.example.akupinjam.models.Branch;
+import com.example.akupinjam.models.CustomerDetails;
 import com.example.akupinjam.models.LoanRequest;
 import com.example.akupinjam.models.User;
 import com.example.akupinjam.repositories.LoanRequestRepository;
+import com.example.akupinjam.utils.CurrencyUtil;
 import com.example.akupinjam.utils.JwtUtil;
+import com.example.akupinjam.utils.LocationCheck;
 
 import jakarta.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import java.util.stream.Collectors;
@@ -31,46 +38,64 @@ public class LoanRequestService {
     private UserService userService;
 
     @Autowired
+    private CustomerDetailsService customerDetailsService;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private LocationCheck locationCheck;
+
+    @Autowired
+    private CurrencyUtil currencyUtil;
+
     public LoanRequestDto createLoanRequest(Map<String, Object> payload, String token) {
+        String email = jwtUtil.extractEmail(token);
+        long activeRequestCount = loanRequestRepository.countActiveLoanRequestsByCustomerEmail(email);
+        if (activeRequestCount > 0) {
+            throw new IllegalArgumentException("You still have an ongoing loan request being processed.");
+        }
+
         LoanRequest loanRequest = new LoanRequest();
 
-        loanRequest.setAmount(payload.get("amount").toString());
+        double amount = Double.parseDouble(payload.get("amount").toString());
 
         double userLat = Double.parseDouble(payload.get("latitude").toString());
         double userLon = Double.parseDouble(payload.get("longitude").toString());
+
+        // Set Customer (required)
+        CustomerDetails customerDetails = customerDetailsService.getByEmail(email);
+        User customer = customerDetails.getUser();
+        double availablePlafond = customerDetails.getAvailablePlafond();
+        if (amount < 50000) {
+            throw new IllegalArgumentException("The minimum allowed amount is Rp50.000.");
+        }
+        if (amount > availablePlafond) {
+            throw new IllegalArgumentException("Your remaining plafond is " + currencyUtil.toRupiah(availablePlafond) +
+                    ". You cannot request an amount greater than your available plafond.");
+        }
+
+        loanRequest.setAmount(amount);
+        loanRequest.setCustomer(customer);
         loanRequest.setLatitude(userLat);
         loanRequest.setLongitude(userLon);
-        
-        
-        // Set Customer (required)
-        String email = jwtUtil.extractEmail(token);
-        User customer = userService.getUserByEmail(email);
-        loanRequest.setCustomer(customer);
-        
+
         // Set Marketing (optional)
         if (payload.containsKey("refferal") && payload.get("refferal") != null) {
             User marketer = userService.getUserByRefferal(payload.get("refferal").toString());
             loanRequest.setMarketing(marketer);
             Branch branch = marketer.getBranch();
             loanRequest.setBranch(branch);
+            loanRequest.setRefferal(payload.get("refferal").toString());
         } else {
+            if (locationCheck.isOutsideIndonesia(userLat, userLon)) {
+                // userLat = customerDetails.getLatitude();
+                // userLon = customerDetails.getLongitude();
+            }
             Branch nearestBranch = branchService.findNearestBranch(userLat, userLon);
             loanRequest.setBranch(nearestBranch);
+            loanRequest.setBranchManager(nearestBranch.getBranchManager());
         }
-
-        // Set Branch Manager (optional)
-        // if (payload.containsKey("branchManagerId")) {
-        // userRepository.findById(UUID.fromString(payload.get("branchManagerId").toString()))
-        // .ifPresent(loanRequest::setBranchManager);
-        // }
-
-        // Set Back Office (optional)
-        // if (payload.containsKey("backOfficeId")) {
-        // userRepository.findById(UUID.fromString(payload.get("backOfficeId").toString()))
-        // .ifPresent(loanRequest::setBackOffice);
-        // }
 
         LoanRequest savedLoanRequest = loanRequestRepository.save(loanRequest);
         return LoanRequestDto.fromEntity(savedLoanRequest);
@@ -86,6 +111,39 @@ public class LoanRequestService {
     public LoanRequest getLoanRequestById(String id) {
         return loanRequestRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Loan request not found"));
+    }
+
+    public LoanRequest assignNonRefferalRequestToMarketing(Map<String, Object> payload) {
+        String loanRequestId = payload.get("loan_request_id").toString();
+        String marketingEmail = payload.get("marketing_email").toString();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String emailBm = null;
+
+        if (authentication.getName() != null && authentication.getName() != "") {
+            emailBm = authentication.getName();
+        } else {
+            throw new AuthenticationCredentialsNotFoundException("User not authenticated.");
+        }
+        LoanRequest loanRequest = getLoanRequestById(loanRequestId);
+        Branch branch = loanRequest.getBranch();
+        User branchManager = branch.getBranchManager();
+        if (!branchManager.getEmail().equalsIgnoreCase(emailBm)) {
+            throw new AccessDeniedException("You don't have permission to this resource");
+        }
+        if (loanRequest.getMarketing() != null) {
+            throw new IllegalArgumentException(
+                    "Marketing already assigned to " + loanRequest.getMarketing().getEmail());
+        }
+        User marketing = branch.getMarketing().stream()
+                .filter(user -> marketingEmail.equals(user.getEmail()))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Can't find marketing with: " + marketingEmail + " in your branch"));
+
+        loanRequest.setMarketing(marketing);
+        loanRequestRepository.save(loanRequest);
+
+        return loanRequest;
     }
 
     public LoanRequestDto marketingAction(String id, Map<String, Object> payload, String token) {
@@ -166,13 +224,27 @@ public class LoanRequestService {
         LoanRequest loanRequest = loanRequestRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Loan request not found"));
 
+        if (Boolean.TRUE.equals(loanRequest.getBackOfficeApproveDisburse())) {
+            throw new IllegalArgumentException("Request already disbursed");
+        } else if (Boolean.FALSE.equals(loanRequest.getBackOfficeApproveDisburse())) {
+            throw new IllegalArgumentException("Disbursement request already rejected");
+        }
+
         if (payload.containsKey("back_office_approval_disbursement")) {
             String emailFromToken = jwtUtil.extractEmail(token);
 
             User backOffice = loanRequest.getBackOffice();
             if (backOffice != null && emailFromToken.equalsIgnoreCase(backOffice.getEmail())) {
                 Boolean approval = Boolean.parseBoolean(payload.get("back_office_approval_disbursement").toString());
+                if (approval) {
+                    CustomerDetails customerDetails = customerDetailsService
+                            .getByEmail(loanRequest.getCustomer().getEmail());
+                    double availablePlafond = customerDetails.getAvailablePlafond() - loanRequest.getAmount();
+                    customerDetails.setAvailablePlafond(availablePlafond);
+                    customerDetailsService.update(customerDetails.getId(), customerDetails);
+                }
                 loanRequest.setBackOfficeApproveDisburse(approval);
+                loanRequest.setCompletedAt(LocalDateTime.now());
             } else {
                 throw new AccessDeniedException("You are not authorized to disburse loan as Back Office.");
             }
@@ -186,7 +258,8 @@ public class LoanRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Loan request not found"));
 
         if (payload.containsKey("amount")) {
-            loanRequest.setAmount(payload.get("amount").toString());
+            double amount = Double.parseDouble(payload.get("amount").toString());
+            loanRequest.setAmount(amount);
         }
 
         if (payload.containsKey("marketing_approval")) {

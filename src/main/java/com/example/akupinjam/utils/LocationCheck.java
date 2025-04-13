@@ -3,7 +3,7 @@ package com.example.akupinjam.utils;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Haversine {
+public class LocationCheck {
     public static double countDistance(double lat1, double lon1, double lat2, double lon2) {
         final int R = 6371; // Radius bumi dalam kilometer
         double dLat = Math.toRadians(lat2 - lat1);
@@ -16,5 +16,8 @@ public class Haversine {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c; // Jarak dalam kilometer
     }
-    
+
+    public boolean isOutsideIndonesia(double latitude, double longitude) {
+        return latitude < -11.0 || latitude > 6.0 || longitude < 95.0 || longitude > 141.0;
+    }    
 }

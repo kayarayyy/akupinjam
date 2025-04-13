@@ -1,5 +1,6 @@
 package com.example.akupinjam.repositories;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.example.akupinjam.models.Branch;
 import com.example.akupinjam.models.LoanRequest;
 
 import jakarta.persistence.LockModeType;
@@ -18,5 +20,19 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequest, UUID> 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT lr FROM LoanRequest lr WHERE lr.id = :id")
     Optional<LoanRequest> findWithLockById(@Param("id") UUID id);
+
+    List<LoanRequest> findByBranch(Branch branch);
+
+    @Query("SELECT COUNT(lr) FROM LoanRequest lr " +
+            "WHERE lr.customer.email = :email " +
+            "AND (lr.marketingApprove IS NULL OR lr.marketingApprove = true) " +
+            "AND (lr.branchManagerApprove IS NULL OR lr.branchManagerApprove = true) " +
+            "AND (lr.backOfficeApproveDisburse IS NULL OR lr.backOfficeApproveDisburse = true) " +
+            "AND (" +
+            "     lr.marketingApprove IS NULL " +
+            "  OR lr.branchManagerApprove IS NULL " +
+            "  OR lr.backOfficeApproveDisburse IS NULL" +
+            ")")
+    long countActiveLoanRequestsByCustomerEmail(@Param("email") String email);
 
 }

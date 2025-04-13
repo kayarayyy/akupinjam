@@ -7,7 +7,8 @@ import com.example.akupinjam.models.LoanRequest;
 
 public class LoanRequestDto {
     private UUID id;
-    private String amount;
+    private double amount;
+    private String refferal;
     private UserDto customer;
     private UserDto marketing;
     private Boolean marketingApprove;
@@ -19,12 +20,13 @@ public class LoanRequestDto {
     private Double longitude;
     private String branch;
 
-    public LoanRequestDto(UUID id, String amount, UserDto customer, UserDto marketing,
+    public LoanRequestDto(UUID id, double amount, String refferal, UserDto customer, UserDto marketing,
                           Boolean marketingApprove, UserDto branchManager, Boolean branchManagerApprove,
                           UserDto backOffice, Boolean backOfficeApprove,
                           Double latitude, Double longitude, Branch branch) {
         this.id = id;
         this.amount = amount;
+        this.refferal = refferal;
         this.customer = customer;
         this.marketing = marketing;
         this.marketingApprove = marketingApprove;
@@ -34,7 +36,7 @@ public class LoanRequestDto {
         this.backOfficeApprove = backOfficeApprove;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.branch = branch.getCity().toString();
+        this.branch = branch.getName();
     }
 
     // Getter
@@ -42,8 +44,11 @@ public class LoanRequestDto {
         return id;
     }
 
-    public String getAmount() {
+    public double getAmount() {
         return amount;
+    }
+    public String getRefferal() {
+        return refferal;
     }
 
     public UserDto getCustomer() {
@@ -91,6 +96,7 @@ public class LoanRequestDto {
         return new LoanRequestDto(
             loanRequest.getId(),
             loanRequest.getAmount(),
+            loanRequest.getRefferal(),
             loanRequest.getCustomer() != null ? UserDto.fromEntity(loanRequest.getCustomer()) : null,
             loanRequest.getMarketing() != null ? UserDto.fromEntity(loanRequest.getMarketing()) : null,
             loanRequest.getMarketingApprove(),

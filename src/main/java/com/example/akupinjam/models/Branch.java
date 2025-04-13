@@ -50,6 +50,7 @@ public class Branch {
 
     @OneToOne
     @JoinColumn(name = "branch_manager_id", referencedColumnName = "id", nullable = true)
+    @JsonManagedReference
     private User branchManager;
 
     @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

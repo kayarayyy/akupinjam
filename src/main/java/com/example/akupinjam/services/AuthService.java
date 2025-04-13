@@ -3,6 +3,8 @@ package com.example.akupinjam.services;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +100,15 @@ public class AuthService {
     public User register(Map<String, Object> payload, String token) {
         // Validasi input agar tidak null
         String email = Objects.toString(payload.get("email"), "").trim();
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$";
+
+        Pattern pattern = Pattern.compile(emailRegex);
+        Matcher matcher = pattern.matcher(email);
+
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Email not valid");
+        }
+
         String nip = Objects.toString(payload.get("nip"), "").trim();
         String name = Objects.toString(payload.get("name"), "").trim();
         String rawPassword = Objects.toString(payload.get("password"), "").trim();
